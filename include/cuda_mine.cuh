@@ -9,3 +9,8 @@
 #include "kmeans/cuda_kmeans.cu"
 #include "kmeans/cuda_wtime.cu"
 #endif
+
+#ifndef APRIORI
+#define APRIORI
+#include "apriori/apriori.cuh"
+#endif
