@@ -36,7 +36,7 @@ int main()
     srand(time(NULL));
 
     scarf::RFConfig config;
-    config.dataSetPath       = "../samples/data/samples.csv";
+    config.dataSetPath       = "../data/samples.csv";
     config.nSamples          = 3000;
     config.nFeatures         = 2;
     config.nTrees            = 1;

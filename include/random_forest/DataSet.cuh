@@ -143,11 +143,11 @@ namespace scarf {
         srand (time(NULL));
 
         std::vector<size_t> randIdx;
-
+    
         // Generate the random indices for the training set
-        for (size_t i = 0; i < n; i++) { 
-            randIdx.push_back(rand() % nSamples);
-		//std::cout << "\n data : " << i << randIdx[i]; 
+        for (size_t i = 0; i < n; i++) {
+	    if(data_samples.size() > 0)	 
+	    	randIdx.push_back(rand() % data_samples.size());
         }
         std::sort(randIdx.begin(), randIdx.end());
 
@@ -156,12 +156,13 @@ namespace scarf {
 
         // Fill the training set with the element at the random indices
         for (size_t i = 0; i < n; i++) {
-            (*ts)[i] = data_samples[randIdx[i]];
-        }
+	   if(data_samples.size() > 0)
+           	(*ts)[i] = data_samples[randIdx[i]];
+	}
 
         // Fill the out of bag indices
         oobIdx->clear();
-        for (size_t i = 0; i < nSamples; i++) {
+        for (size_t i = 0; i < data_samples.size(); i++) {
             if (!std::binary_search(randIdx.begin(), randIdx.end(), i)) {
                 oobIdx->push_back(i);
             }
@@ -197,6 +198,7 @@ namespace scarf {
                 featureStream >> t.data[i];
                 i++;
             }
+	    
             push_back(t);
             count++;
         }
