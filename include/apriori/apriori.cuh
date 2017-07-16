@@ -33,6 +33,8 @@ void scan_D();
 void prune();
 bool check_compatibility(VI ,VI );
 void set_count(VI );
+int getItemPosition(unsigned int *, int, int);
+void printBitMap(int**, int , int);
 unsigned int num_transactions;
 unsigned int MIN_SUPPORT;
 void output(structure T)
@@ -331,12 +333,24 @@ int apriori(char* dataset , int minSup)
     unsigned int *transactions = NULL;
     unsigned int *trans_offset = NULL;
     unsigned int *ci_h = NULL;//bins array for histogram op
+	unsigned int *unique_items = NULL;
+	int** bitMap = NULL;	
 
     unsigned int element_id = 0;
 
     transactions = (unsigned int *) malloc(MAX_NUM_ELEMENTS * sizeof(unsigned int));
     trans_offset = (unsigned int *) malloc((MAX_NUM_ELEMENTS + 1) * sizeof(unsigned int));
     ci_h = (unsigned int *) malloc(MAX_UNIQUE_ITEMS * sizeof(unsigned int));
+
+	//New representation
+	unique_items = (unsigned int *) malloc(MAX_UNIQUE_ITEMS * sizeof(unsigned int));
+	bitMap = new int*[MAX_TRANSACTIONS];
+	for(size_t i = 0 ; i < MAX_TRANSACTIONS ; ++i)
+		bitMap[i] = new int[UINT_MAX-1];
+
+	for(int i = 0 ; i < MAX_TRANSACTIONS; ++i)
+		for(int j = 0; j<UINT_MAX-1; j++)
+			bitMap[i][j] = 65535;
 
     lines = 0;
     element_id = 0;
@@ -349,11 +363,14 @@ int apriori(char* dataset , int minSup)
             count = 0;
             istringstream s(curline); 
             string st;
+			int position;
             while(getline(s, st, ' ') && count < MAX_ITEM_PER_TRANSACTION) {
                 int item = atol(st.c_str());
                 if (item < MAX_UNIQUE_ITEMS) {
                     // add an item only if it is in the range [0,max_unique_items)
                     transactions[element_id++] = atol(st.c_str());
+					position = getItemPosition(unique_items, item, MAX_UNIQUE_ITEMS);
+					bitMap[element_id-1][position] = 1;
                     count++;
                 }
             }
@@ -368,6 +385,8 @@ int apriori(char* dataset , int minSup)
         return 0;
     }
     fp1.close();
+
+	printBitMap(bitMap, MAX_TRANSACTIONS, UINT_MAX-1);
     unsigned int num_elements = element_id;
     num_transactions = lines;
 //#ifdef TEST_PARAMS
@@ -1291,3 +1310,29 @@ int apriori(char* dataset , int minSup)
 bool pair_compare(const pair<short unsigned int, unsigned int>& p1,const pair<short unsigned int, unsigned int>& p2) {
    return p1.second < p2.second;    
 }
+
+int getItemPosition(unsigned int *unique_items, int item, int n){
+	int i;
+	for(i = 0; i<n; i++)
+		if(unique_items[i] == item)
+			return i;
+		else if(unique_items[i] == 65535){
+			unique_items[i] = item;
+			return i;	
+		}
+		
+	return -1;
+}
+
+void printBitMap(int** map, int rows, int columns){
+	for(int i = 0; i<rows; i++){
+		for(int j = 0; j<columns; j++)
+			cout<<map[i][j]<<" ";
+		cout<<"\n";
+	}
+}
+
+
+
+
+
