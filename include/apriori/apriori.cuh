@@ -34,9 +34,11 @@ void prune();
 bool check_compatibility(VI ,VI );
 void set_count(VI );
 
-//bitmap, unique items, item, count, transaction no
-void addToBitMap(unsigned int*, unsigned int*, int, int, int);
-void printBitMap(unsigned int*);
+//unsigned int *bitMap, unsigned int *transactions, unsigned int *trans_offset, unsigned int *unique_items, int no_of_trans, int no_of_unique_items
+void createBitMap(unsigned int *, unsigned int *, unsigned int *, unsigned int *, int, int);
+int addToUniqueItems(unsigned int *, int);
+void printBitMap(unsigned int*, int, int);
+
 
 unsigned int num_transactions;
 unsigned int MIN_SUPPORT;
@@ -331,6 +333,7 @@ int apriori(char* dataset , int minSup)
     //size_t len = 0;
     unsigned int lines = 0;
     unsigned int count = 0;
+	unsigned int unique_items_count = 0;
     //char *ln, *nptr;
 
     unsigned int *transactions = NULL;
@@ -345,7 +348,7 @@ int apriori(char* dataset , int minSup)
 
 	//New representation
 	unsigned int *unique_items = (unsigned int *) malloc(MAX_UNIQUE_ITEMS * sizeof(unsigned int));
-	unsigned int *bitMap = (unsigned int *) malloc(MAX_TRANSACTIONS*MAX_UNIQUE_ITEMS * sizeof(unsigned int));
+	unsigned int *bitMap = NULL;
 	
 	for(int i = 0 ; i < MAX_UNIQUE_ITEMS; ++i)
 		unique_items[i] = -1;
@@ -366,7 +369,7 @@ int apriori(char* dataset , int minSup)
                 if (item < MAX_UNIQUE_ITEMS) {
                     // add an item only if it is in the range [0,max_unique_items)
 					transactions[element_id++] = item;
-					addToBitMap(bitMap, unique_items, item, count, lines);
+					unique_items_count+=addToUniqueItems(unique_items, item);					
 					count++;
                 }
             }
@@ -382,9 +385,19 @@ int apriori(char* dataset , int minSup)
     }
     fp1.close();
 
-	printBitMap(bitMap);
+	//printBitMap(bitMap);
     unsigned int num_elements = element_id;
     num_transactions = lines;
+
+	
+	//malloc bitmap
+	bitMap = (unsigned int *) malloc(num_transactions * unique_items_count * sizeof(unsigned int));
+
+	//Add to bitmap
+    createBitMap(bitMap, transactions, trans_offset, unique_items, num_transactions, unique_items_count);
+	
+	printBitMap(bitMap, num_transactions, unique_items_count);
+
 //#ifdef TEST_PARAMS
     cout<<"Number of Transactions = "<<num_transactions<<endl;
     cout<<"num_elements in transactions array = "<<num_elements<<endl;
@@ -1284,6 +1297,16 @@ int apriori(char* dataset , int minSup)
        free(r_c);
 
     }
+	if (bitMap) {
+       free(bitMap);
+
+    }
+	if (unique_items) {
+       free(unique_items);
+
+    }
+
+
     cudaFree(d_offsets);
     cudaFree(d_input);
     cudaFree(ci_d);
@@ -1308,32 +1331,48 @@ bool pair_compare(const pair<short unsigned int, unsigned int>& p1,const pair<sh
 }
 
 //bitmap[], unique items[], item, count, transaction no
-void addToBitMap(unsigned int *bitMap, unsigned int *unique_items, int item, int count, int trans_no){
+void createBitMap(unsigned int *bitMap, unsigned int *transactions, unsigned int *trans_offset, unsigned int *unique_items, int no_of_trans, int no_of_unique_items){
+
+	unsigned int start;
+	unsigned int end;	
+	for(int j = 0; j < no_of_trans; j++){
+		start = trans_offset[j];
+		end = trans_offset[j+1];
+		for(int i = start; i<end; i++){
+			for(int k = 0; k<no_of_unique_items; k++){
+				if(transactions[i] == unique_items[k]){
+					bitMap[j*no_of_unique_items+k] = 1;
+					break;
+				}
+			}
+		}		
+	}
+
+	
+}
+
+int addToUniqueItems(unsigned int *unique_items, int item){
 	
 	for(int i = 0; i<MAX_UNIQUE_ITEMS; i++){
 		if(unique_items[i] == -1){
 			unique_items[i] = item;
-			bitMap[trans_no*MAX_UNIQUE_ITEMS+count] = 1;
-			return;
+			return 1;
 		}
 		if(item == unique_items[i]){
-			bitMap[trans_no*MAX_UNIQUE_ITEMS+i]++;
-			return;
+			return 0;
 		}
 	}
+	return 0;
 }
 
-void printBitMap(unsigned int *map){
-	unsigned int count = 0;
-	for(int i = 0; i<MAX_TRANSACTIONS; i++){
-		for(int j = 0; j<MAX_UNIQUE_ITEMS; j++){	
-			//cout<<map[MAX_UNIQUE_ITEMS*i+j]<<" ";
-			count+=map[MAX_UNIQUE_ITEMS*i+j];
-				
+void printBitMap(unsigned int *map, int num_trans, int unique_items){
+	int count = 0;
+	for(int i = 0; i<num_trans; i++){
+		for(int j = 0; j<unique_items; j++){	
+			cout<<map[unique_items*i+j]<<" ";	
 		}
-		//cout<<"\n";
+		cout<<"\n";
 	}
-	cout<<"\n****** Bitmap Count : "<<count <<"  **************************\n";
 }
 
 

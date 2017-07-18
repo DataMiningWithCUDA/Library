@@ -2,6 +2,6 @@
 
 int main()
 {
-  apriori("../data/5000i.txt" , 15); // input file , minimum support
+  apriori("../data/1000i.txt" , 5); // input file , minimum support
   return 0;
 }
