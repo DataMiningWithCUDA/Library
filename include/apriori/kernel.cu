@@ -2,6 +2,8 @@
 #include "support.h"
 #include<iostream>
 #include<stdio.h>
+
+
 using namespace std;
 /*__constant__ unsigned short dc_flist_key_16_index[max_unique_items];
 __global__ void histogram_kernel_naive(unsigned int* input, unsigned int* bins,
@@ -16,23 +18,30 @@ __global__ void histogram_kernel_naive(unsigned int* input, unsigned int* bins,
         i+=stride;
     }
 }*/
+
+
 __global__ void histogram_kernel(unsigned int* input, unsigned int* bins,
-        unsigned int num_elements) {
+        unsigned int *unique_items, int uniqueItemsCount,int numTrans) {
     unsigned int i = blockDim.x * blockIdx.x + threadIdx.x;
     unsigned int index_x = 0;
     extern __shared__ unsigned int hist_priv[];
+    
     for (int i = 0; i < ceil(MAX_UNIQUE_ITEMS / (1.0 * blockDim.x)); i++){
         index_x = threadIdx.x + i * blockDim.x;
         if (index_x < MAX_UNIQUE_ITEMS)
             hist_priv[index_x] = 0;
     }
+    
+    
 
     __syncthreads();
     unsigned int stride = blockDim.x * gridDim.x;
-    while (i < num_elements) {
-        int bin_num = input[i];
-        if (bin_num < MAX_UNIQUE_ITEMS) {
-            atomicAdd(&hist_priv[bin_num], 1);
+    while (i < numTrans * uniqueItemsCount) {
+        
+        if (input[i] >= 1) {
+            int bin_num = i%uniqueItemsCount;
+             int itemNo = unique_items[bin_num];
+            atomicAdd(&hist_priv[itemNo], input[i]);
         }
         i+=stride;
     }
@@ -54,6 +63,7 @@ __global__ void pruneGPU_kernel(unsigned int* input, int num_elements, int min_s
         } 
     }
 }
+
 __global__ void  initializeMaskArray(int *mask_d, int maskLength) {
     int index = threadIdx.x + blockDim.x * blockIdx.x;
     if (index < maskLength) {
@@ -131,9 +141,9 @@ __global__ void selfJoinKernel(unsigned int *input_d, int *output_d, int num_ele
     }
 }
 __global__ void findFrequencyGPU_kernel(unsigned int *d_transactions, 
-                                 unsigned int *d_offsets,
+                                 unsigned int *d_uniqueItems,
                                  int num_transactions,
-                                 int num_elements,
+                                 int unique_items_count,
                                  unsigned int* d_keyIndex,
                                  int* d_mask,
                                  int num_patterns,
@@ -152,17 +162,28 @@ __global__ void findFrequencyGPU_kernel(unsigned int *d_transactions,
     __syncthreads();
     // bring the trnsactions to the SM 
     for (int i = 0;i < MAX_TRANSACTION_PER_SM; i++) {
-        int item_ends = num_elements;
+        int item_ends = num_transactions*unique_items_count;
         if ((trans_index + i + 1) == num_transactions) {
-            item_ends = num_elements;
+            item_ends = num_transactions*unique_items_count;
         } else if ((trans_index + i + 1) < num_transactions) {
-            item_ends = d_offsets[trans_index + i + 1];
+            item_ends = (trans_index + i + 1)*unique_items_count;
         } else
             continue;
-       if ((tx + d_offsets[trans_index + i]) < item_ends && tx < MAX_ITEM_PER_TRANSACTION) {
-           Ts[i][tx] = d_transactions[d_offsets[trans_index + i] + tx];
+       if ((tx + (trans_index + i)*unique_items_count) < item_ends && tx <MAX_ITEM_PER_TRANSACTION) {
+       
+           if(d_transactions[(trans_index+i)*unique_items_count + tx]!= 0){
+               Ts[i][tx] = d_uniqueItems[tx];
+           
+               //printf("%d ",Ts[i][tx]);
+           }
        }
+       
+       //printf("%d ",Ts[i][tx]);
+       
     }
+    
+    
+    //printf("\n");
 
     __syncthreads();
 
@@ -244,8 +265,9 @@ __global__ void convert2Sparse(int *input_d,
     }        
 }
 
-__global__ void findHigherPatternFrequencyGPU(unsigned int *d_transactions, unsigned int *d_offsets,
-                                              int num_transactions, int num_elements, unsigned int* d_keyIndex,
+__global__ void findHigherPatternFrequencyGPU(unsigned int *d_transactions, unsigned int *d_uniqueItems,
+                                 int num_transactions,
+                                 int unique_items_count, unsigned int* d_keyIndex,
                                               int *d_mask, int num_patterns, unsigned int *api_d,unsigned  int *iil_d, int power,
                                               int size_api_d, int size_iil_d, int maskLength) {
     
@@ -262,15 +284,19 @@ __global__ void findHigherPatternFrequencyGPU(unsigned int *d_transactions, unsi
     __syncthreads();
     // bring items in SM 
     for (int i = 0;i < MAX_TRANSACTION_PER_SM; i++) {
-        int item_ends = num_elements;
+        int item_ends = num_transactions*unique_items_count;
         if ((trans_index + i + 1) == num_transactions) {
-            item_ends = num_elements;
+            item_ends = num_transactions*unique_items_count;
         } else if ((trans_index + i + 1) < num_transactions) {
-            item_ends = d_offsets[trans_index + i + 1];
+            item_ends = (trans_index + i + 1)*unique_items_count;
         } else
             continue;
-       if ((tx + d_offsets[trans_index + i]) < item_ends && tx < MAX_ITEM_PER_TRANSACTION) {
-           Ts[i][tx] = d_transactions[d_offsets[trans_index + i] + tx];
+       if ((tx + (trans_index + i)*unique_items_count) < item_ends && tx < MAX_ITEM_PER_TRANSACTION) {
+           if(d_transactions[(trans_index+i)*unique_items_count + tx]!= 0){
+               Ts[i][tx] = d_uniqueItems[tx];
+           
+               //printf("%d ",Ts[i][tx]);
+           }
        }
     }
     __syncthreads();
