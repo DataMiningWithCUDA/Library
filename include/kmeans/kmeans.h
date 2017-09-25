@@ -72,6 +72,6 @@ int     file_write(char*, int, int, int, float**, int*);
 
 double  wtime(void);
 
-extern int _debug;
+//extern int _debug;
 
 #endif

@@ -47,19 +47,18 @@
 #include <fcntl.h>
 #include <unistd.h>     /* getopt() */
 
-int      _debug;
+//int      _debug;
 #include "../../../include/cuda_mine.cuh"
 
 /*---< usage() >------------------------------------------------------------*/
 static void usage(char *argv0, float threshold) {
-    char *help =
+    const char *help =
         "Usage: %s [switches] -i filename -n num_clusters\n"
         "       -i filename    : file containing data to be clustered\n"
         "       -b             : input file is in binary format (default no)\n"
         "       -n num_clusters: number of clusters (K must > 1)\n"
         "       -t threshold   : threshold value (default %.4f)\n"
-        "       -o             : output timing results (default no)\n"
-        "       -d             : enable debug mode\n";
+        "       -o             : output timing results (default no)\n";
     fprintf(stderr, help, argv0, threshold);
     exit(-1);
 }
@@ -81,7 +80,7 @@ int main(int argc, char **argv) {
            int     loop_iterations;
 
     /* some default values */
-    _debug           = 0;
+    //_debug           = 0;
     threshold        = 0.001;
     numClusters      = 0;
     isBinaryFile     = 0;
@@ -100,8 +99,8 @@ int main(int argc, char **argv) {
                       break;
             case 'o': is_output_timing = 1;
                       break;
-            case 'd': _debug = 1;
-                      break;
+            //case 'd': _debug = 1;
+              //        break;
             case '?': usage(argv[0], threshold);
                       break;
             default: usage(argv[0], threshold);

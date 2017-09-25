@@ -318,7 +318,7 @@ int compare(const void *a, const void *b) {
 }
 bool pair_compare(const pair<short unsigned int, unsigned int>& p1,const pair<short unsigned int, unsigned int>& p2);
 
-int apriori(char* dataset , int minSup)
+int apriori(const char* dataset , int minSup)
 {
     float totalRunTime = 0.0;
     float totalAllocTime = 0.0;
@@ -1285,7 +1285,8 @@ int apriori(char* dataset , int minSup)
     cudaFree(actual_patterns_items_d);
     cudaFree(index_items_lookup_d);
     cout<<"program end"<<endl;
-
+	
+	return 4;
 }
 
 bool pair_compare(const pair<short unsigned int, unsigned int>& p1,const pair<short unsigned int, unsigned int>& p2) {

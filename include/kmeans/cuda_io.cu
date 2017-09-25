@@ -48,10 +48,10 @@ float** file_read(int   isBinaryFile,  /* flag: 0 or 1 */
         assert(numBytesRead == sizeof(int));
         numBytesRead = read(infile, numCoords, sizeof(int));
         assert(numBytesRead == sizeof(int));
-        if (_debug) {
+        /*if (_debug) {
             printf("File %s numObjs   = %d\n",filename,*numObjs);
             printf("File %s numCoords = %d\n",filename,*numCoords);
-        }
+        }*/
 
         /* allocate space for objects[][] and read all objects */
         len = (*numObjs) * (*numCoords);
@@ -103,7 +103,7 @@ float** file_read(int   isBinaryFile,  /* flag: 0 or 1 */
                 (*numObjs)++;
         }
         rewind(infile);
-        if (_debug) printf("lineLen = %d\n",lineLen);
+        //if (_debug) printf("lineLen = %d\n",lineLen);
 
         /* find the no. objects of each object */
         (*numCoords) = 0;
@@ -115,10 +115,10 @@ float** file_read(int   isBinaryFile,  /* flag: 0 or 1 */
             }
         }
         rewind(infile);
-        if (_debug) {
+        /*if (_debug) {
             printf("File %s numObjs   = %d\n",filename,*numObjs);
             printf("File %s numCoords = %d\n",filename,*numCoords);
-        }
+        }*/
 
         /* allocate space for objects[][] and read all objects */
         len = (*numObjs) * (*numCoords);
