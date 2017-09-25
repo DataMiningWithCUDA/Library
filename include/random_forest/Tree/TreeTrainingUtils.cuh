@@ -118,7 +118,7 @@ size_t countUniqueValues(const DeviceVector &vector) {
     DeviceVector vec(vector);
     thrust::sort(vec.begin(), vec.end());
 
-    size_t num = inner_product(
+    size_t num = thrust::inner_product(
             vec.begin(), vec.end() - 1,
             vec.begin() + 1,
             size_t(1),
