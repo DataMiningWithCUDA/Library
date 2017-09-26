@@ -625,7 +625,7 @@ int apriori(const char* dataset , int minSup)
         }
     }
     if(maskLength<2){
-       return 3;
+       return 1;
     }
     //now we need to convert the mask array to a sparse matrix in parallel
     // this means we need to find number of non zero entries in each row of mask matrix
@@ -1286,7 +1286,7 @@ int apriori(const char* dataset , int minSup)
     cudaFree(index_items_lookup_d);
     cout<<"program end"<<endl;
 	
-	return 4;
+	return 2;
 }
 
 bool pair_compare(const pair<short unsigned int, unsigned int>& p1,const pair<short unsigned int, unsigned int>& p2) {
